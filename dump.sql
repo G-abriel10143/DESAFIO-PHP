@@ -224,3 +224,75 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+-- ===============================================
+-- Criar Stored Procedure para buscar aluno
+-- ===============================================
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_buscar_aluno(IN p_id_aluno INT)
+BEGIN
+    SELECT id_aluno, nome, cpf, data_nascimento
+    FROM alunos
+    WHERE id_aluno = p_id_aluno;
+END$$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_listar_alunos_turma(IN p_id_turma INT)
+BEGIN
+    SELECT a.id_aluno, a.nome AS nome_aluno, a.cpf, a.data_nascimento
+    FROM matriculas m
+    JOIN alunos a ON m.id_aluno = a.id_aluno
+    WHERE m.id_turma = p_id_turma
+    ORDER BY a.nome; -- Ordenação alfabética dos alunos
+END$$
+
+DELIMITER ;
+
+
+CREATE TABLE administradores (
+    id_admin INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL
+);
+
+-- Adicionar um administrador inicial (senha será encriptada no código)
+INSERT INTO administradores (email, senha) VALUES ('admin@fiap.com', '1234');
+
+
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_buscar_alunos_nome(IN p_nome VARCHAR(255))
+BEGIN
+    SELECT id_aluno, nome, cpf, data_nascimento
+    FROM alunos
+    WHERE nome LIKE p_nome
+    ORDER BY nome;
+END$$
+
+DELIMITER ;
+
+
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_listar_turmas_com_quantidade()
+BEGIN
+    SELECT 
+        t.id_turma,
+        t.nome,
+        t.descricao,
+        COUNT(m.id_aluno) AS quantidade_alunos
+    FROM turmas t
+    LEFT JOIN matriculas m ON t.id_turma = m.id_turma
+    GROUP BY t.id_turma, t.nome, t.descricao
+    ORDER BY t.nome;
+END$$
+
+DELIMITER ;
