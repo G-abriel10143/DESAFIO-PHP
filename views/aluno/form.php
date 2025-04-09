@@ -36,7 +36,7 @@ include __DIR__ . '/../menu.php';
             <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" value="<?= $aluno['data_nascimento'] ?? '' ?>" required>
         </div>
 
-        <button type="submit" class="btn btn-success w-100">Salvar</button>
+        <button type="submit" class="btn btn-primary w-100">Salvar</button>
     </form>
 </div>
 
