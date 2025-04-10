@@ -23,20 +23,38 @@ class TurmaController {
 
     // Inserir uma nova turma
     public function inserir() {
-        try {
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
                 $nome = $_POST['nome'];
                 $descricao = $_POST['descricao'];
     
-                // Inserir a turma com validação no Model
                 Turma::inserir($nome, $descricao);
                 header('Location: index.php?controller=turma&action=listar');
+                exit();
+            } catch (Exception $e) {
+                $erro = $e->getMessage(); // Captura o erro
+                include 'views/turma/form.php';
             }
-        } catch (Exception $e) {
-            echo "<div class='alert alert-danger'>{$e->getMessage()}</div>";
-            include 'views/turmas_form.php';
         }
     }
+    
+    public function editar($id) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $nome = $_POST['nome'];
+                $descricao = $_POST['descricao'];
+    
+                Turma::editar($id, $nome, $descricao);
+                header('Location: index.php?controller=turma&action=listar');
+                exit();
+            } catch (Exception $e) {
+                $erro = $e->getMessage(); // Captura o erro
+                $turma = Turma::buscarPorId($id); // Carrega os dados da turma
+                include 'views/turma/form.php';
+            }
+        }
+    }
+    
     
 
     // Atualizar os dados de uma turma existente
