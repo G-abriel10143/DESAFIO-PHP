@@ -20,6 +20,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="index.php?controller=turma&action=listar">Turmas</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="index.php?controller=admin&action=listar">Administrador</a>
+                </li>
             </ul>
             <!-- Botão de sair -->
             <form method="POST" action="?controller=login&action=logout" class="ms-auto">
