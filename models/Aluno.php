@@ -29,12 +29,21 @@ class Aluno {
             throw new Exception("Data de nascimento inválida. Certifique-se de que seja uma data válida no passado.");
         }
     
-        // Insere o aluno no banco de dados
+        // Valida duplicidade de CPF
         $pdo = Database::conectar();
+        $sql = "SELECT COUNT(*) FROM alunos WHERE cpf = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$cpf]);
+        if ($stmt->fetchColumn() > 0) {
+            throw new Exception("Erro: O CPF já está cadastrado no sistema.");
+        }
+    
+        // Insere o aluno no banco de dados
         $sql = "CALL sp_inserir_aluno(?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         return $stmt->execute([$nome, $cpf, $dataNascimento]);
     }
+    
     
     // Buscar aluno por ID
     public static function buscarPorId($id) {

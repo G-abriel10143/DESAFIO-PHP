@@ -40,23 +40,22 @@ class AlunoController {
 
     // Inserir um novo aluno
     public function inserir() {
-        try {
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
                 $nome = $_POST['nome'];
                 $cpf = $_POST['cpf'];
                 $dataNascimento = $_POST['data_nascimento'];
     
-                // Chama o método de inserção com validação no Model
                 Aluno::inserir($nome, $cpf, $dataNascimento);
-    
                 header('Location: index.php?controller=aluno&action=listar');
+                exit();
+            } catch (Exception $e) {
+                $erro = $e->getMessage(); // Captura o erro
+                include 'views/aluno/form.php'; // Recarrega o formulário com o erro
             }
-        } catch (Exception $e) {
-            // Exibe mensagem de erro em caso de exceção
-            echo "<div class='alert alert-danger'>{$e->getMessage()}</div>";
-            include __DIR__ . '/../views/aluno/form.php';
         }
     }
+    
     
 
     // Atualizar os dados de um aluno

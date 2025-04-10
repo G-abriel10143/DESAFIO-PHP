@@ -1,11 +1,16 @@
--- Criar banco de dados
+-- ===============================================
+-- Criar o banco de dados
+-- ===============================================
 CREATE DATABASE desafio_fiap;
 
--- Selecionar o banco
+-- Selecionar o banco de dados para uso
 USE desafio_fiap;
 
-
+-- ===============================================
 -- Criar tabela de alunos
+-- ===============================================
+-- Tabela para armazenar informações dos alunos, incluindo:
+-- ID único, nome, data de nascimento e CPF (único).
 CREATE TABLE IF NOT EXISTS alunos (
     id_aluno INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -13,41 +18,47 @@ CREATE TABLE IF NOT EXISTS alunos (
     cpf VARCHAR(14) NOT NULL UNIQUE
 );
 
+-- ===============================================
 -- Criar tabela de turmas
+-- ===============================================
+-- Tabela para armazenar informações das turmas, incluindo:
+-- ID único, nome e descrição.
 CREATE TABLE IF NOT EXISTS turmas (
     id_turma INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     descricao TEXT NOT NULL
 );
 
--- Criar tabela de matriculas
+-- ===============================================
+-- Criar tabela de matrículas
+-- ===============================================
+-- Tabela para registrar as matrículas dos alunos nas turmas.
+-- Inclui ID único, referência ao aluno, referência à turma,
+-- data da matrícula e restrições de unicidade.
 CREATE TABLE IF NOT EXISTS matriculas (
     id_matricula INT AUTO_INCREMENT PRIMARY KEY,
     id_aluno INT NOT NULL,
     id_turma INT NOT NULL,
     data_matricula TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (id_aluno, id_turma),
-    FOREIGN KEY (id_aluno) REFERENCES alunos(id_aluno) ON DELETE CASCADE,
-    FOREIGN KEY (id_turma) REFERENCES turmas(id_turma) ON DELETE CASCADE
+    UNIQUE (id_aluno, id_turma), -- Garante que um aluno não seja matriculado duas vezes na mesma turma
+    FOREIGN KEY (id_aluno) REFERENCES alunos(id_aluno) ON DELETE CASCADE, -- Exclui matrícula se o aluno for deletado
+    FOREIGN KEY (id_turma) REFERENCES turmas(id_turma) ON DELETE CASCADE -- Exclui matrícula se a turma for deletada
 );
 
 -- ===============================================
--- Criar Stored Procedure para listar alunos
+-- Stored Procedures para alunos
 -- ===============================================
-DELIMITER $$
 
+-- Listar todos os alunos ordenados alfabeticamente
+DELIMITER $$
 CREATE PROCEDURE sp_listar_alunos()
 BEGIN
     SELECT * FROM alunos ORDER BY nome;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para inserir aluno
--- ===============================================
+-- Inserir um novo aluno
 DELIMITER $$
-
 CREATE PROCEDURE sp_inserir_aluno(
     IN p_nome VARCHAR(100),
     IN p_cpf VARCHAR(14),
@@ -57,14 +68,10 @@ BEGIN
     INSERT INTO alunos (nome, cpf, data_nascimento) 
     VALUES (p_nome, p_cpf, p_data_nascimento);
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para editar aluno
--- ===============================================
+-- Editar informações de um aluno existente
 DELIMITER $$
-
 CREATE PROCEDURE sp_editar_aluno(
     IN p_id_aluno INT,
     IN p_nome VARCHAR(100),
@@ -76,40 +83,53 @@ BEGIN
     SET nome = p_nome, cpf = p_cpf, data_nascimento = p_data_nascimento
     WHERE id_aluno = p_id_aluno;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para deletar aluno
--- ===============================================
+-- Deletar um aluno pelo ID
 DELIMITER $$
-
 CREATE PROCEDURE sp_deletar_aluno(
     IN p_id_aluno INT
 )
 BEGIN
     DELETE FROM alunos WHERE id_aluno = p_id_aluno;
 END $$
+DELIMITER ;
 
+-- Buscar um aluno pelo ID
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_aluno(IN p_id_aluno INT)
+BEGIN
+    SELECT id_aluno, nome, cpf, data_nascimento
+    FROM alunos
+    WHERE id_aluno = p_id_aluno;
+END$$
+DELIMITER ;
+
+-- Buscar alunos pelo nome (usando LIKE para busca parcial)
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_alunos_nome(IN p_nome VARCHAR(255))
+BEGIN
+    SELECT id_aluno, nome, cpf, data_nascimento
+    FROM alunos
+    WHERE nome LIKE p_nome
+    ORDER BY nome;
+END$$
 DELIMITER ;
 
 -- ===============================================
--- Criar Stored Procedure para listar turmas
+-- Stored Procedures para turmas
 -- ===============================================
-DELIMITER $$
 
+-- Listar todas as turmas ordenadas alfabeticamente
+DELIMITER $$
 CREATE PROCEDURE sp_listar_turmas()
 BEGIN
     SELECT * FROM turmas ORDER BY nome;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para inserir turma
--- ===============================================
+-- Inserir uma nova turma
 DELIMITER $$
-
 CREATE PROCEDURE sp_inserir_turma(
     IN p_nome VARCHAR(100),
     IN p_descricao TEXT
@@ -118,14 +138,10 @@ BEGIN
     INSERT INTO turmas (nome, descricao) 
     VALUES (p_nome, p_descricao);
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para editar turma
--- ===============================================
+-- Editar informações de uma turma existente
 DELIMITER $$
-
 CREATE PROCEDURE sp_editar_turma(
     IN p_id_turma INT,
     IN p_nome VARCHAR(100),
@@ -136,28 +152,40 @@ BEGIN
     SET nome = p_nome, descricao = p_descricao
     WHERE id_turma = p_id_turma;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para deletar turma
--- ===============================================
+-- Deletar uma turma pelo ID
 DELIMITER $$
-
 CREATE PROCEDURE sp_deletar_turma(
     IN p_id_turma INT
 )
 BEGIN
     DELETE FROM turmas WHERE id_turma = p_id_turma;
 END $$
+DELIMITER ;
 
+-- Listar turmas com a quantidade de alunos matriculados
+DELIMITER $$
+CREATE PROCEDURE sp_listar_turmas_com_quantidade()
+BEGIN
+    SELECT 
+        t.id_turma,
+        t.nome,
+        t.descricao,
+        COUNT(m.id_aluno) AS quantidade_alunos
+    FROM turmas t
+    LEFT JOIN matriculas m ON t.id_turma = m.id_turma
+    GROUP BY t.id_turma, t.nome, t.descricao
+    ORDER BY t.nome;
+END$$
 DELIMITER ;
 
 -- ===============================================
--- Criar Stored Procedure para listar matrículas
+-- Stored Procedures para matrículas
 -- ===============================================
-DELIMITER $$
 
+-- Listar todas as matrículas com informações de alunos e turmas
+DELIMITER $$
 CREATE PROCEDURE sp_listar_matriculas()
 BEGIN
     SELECT 
@@ -170,14 +198,10 @@ BEGIN
     JOIN turmas t ON m.id_turma = t.id_turma
     ORDER BY a.nome;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para inserir matrícula
--- ===============================================
+-- Inserir uma nova matrícula (com validação de duplicidade)
 DELIMITER $$
-
 CREATE PROCEDURE sp_inserir_matricula(
     IN p_id_aluno INT,
     IN p_id_turma INT
@@ -191,14 +215,10 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'O aluno já está matriculado nesta turma';
     END IF;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para editar matrícula
--- ===============================================
+-- Editar uma matrícula existente
 DELIMITER $$
-
 CREATE PROCEDURE sp_editar_matricula(
     IN p_id_matricula INT,
     IN p_id_turma INT
@@ -208,41 +228,20 @@ BEGIN
     SET id_turma = p_id_turma
     WHERE id_matricula = p_id_matricula;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para deletar matrícula
--- ===============================================
+-- Deletar uma matrícula pelo ID
 DELIMITER $$
-
 CREATE PROCEDURE sp_deletar_matricula(
     IN p_id_matricula INT
 )
 BEGIN
     DELETE FROM matriculas WHERE id_matricula = p_id_matricula;
 END $$
-
 DELIMITER ;
 
--- ===============================================
--- Criar Stored Procedure para buscar aluno
--- ===============================================
-
+-- Listar alunos matriculados em uma turma específica
 DELIMITER $$
-
-CREATE PROCEDURE sp_buscar_aluno(IN p_id_aluno INT)
-BEGIN
-    SELECT id_aluno, nome, cpf, data_nascimento
-    FROM alunos
-    WHERE id_aluno = p_id_aluno;
-END$$
-
-DELIMITER ;
-
-
-DELIMITER $$
-
 CREATE PROCEDURE sp_listar_alunos_turma(IN p_id_turma INT)
 BEGIN
     SELECT a.id_aluno, a.nome AS nome_aluno, a.cpf, a.data_nascimento
@@ -251,48 +250,17 @@ BEGIN
     WHERE m.id_turma = p_id_turma
     ORDER BY a.nome; -- Ordenação alfabética dos alunos
 END$$
-
 DELIMITER ;
 
-
+-- ===============================================
+-- Criar tabela de administradores
+-- ===============================================
+-- Tabela para armazenar administradores do sistema
 CREATE TABLE administradores (
     id_admin INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL
 );
 
--- Adicionar um administrador inicial (senha será encriptada no código)
+-- Inserir um administrador inicial (senha será encriptada no código)
 INSERT INTO administradores (email, senha) VALUES ('admin@fiap.com', '1234');
-
-
-
-DELIMITER $$
-
-CREATE PROCEDURE sp_buscar_alunos_nome(IN p_nome VARCHAR(255))
-BEGIN
-    SELECT id_aluno, nome, cpf, data_nascimento
-    FROM alunos
-    WHERE nome LIKE p_nome
-    ORDER BY nome;
-END$$
-
-DELIMITER ;
-
-
-
-DELIMITER $$
-
-CREATE PROCEDURE sp_listar_turmas_com_quantidade()
-BEGIN
-    SELECT 
-        t.id_turma,
-        t.nome,
-        t.descricao,
-        COUNT(m.id_aluno) AS quantidade_alunos
-    FROM turmas t
-    LEFT JOIN matriculas m ON t.id_turma = m.id_turma
-    GROUP BY t.id_turma, t.nome, t.descricao
-    ORDER BY t.nome;
-END$$
-
-DELIMITER ;
